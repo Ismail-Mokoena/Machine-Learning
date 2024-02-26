@@ -1,27 +1,46 @@
 import numpy as np
+import tensorflow as tf
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-
-#import dataset
-dataset = pd.read_csv('Data.csv')
-x = dataset.iloc[:, :-1].values
-y = dataset.iloc[:, -1].values
+from sklearn.model_selection import train_test_split
 
 
-#taking care of missing data
-"Replace missing values with an average"
-imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
-imputer.fit(x[:, 1:3])
-x[:, 1:3] = imputer.transform(x[:, 1:3])
 
-#encoding categorical data
-"create a binary vector"
-col_trans = ColumnTransformer(transformers=[('encoder', OneHotEncoder(), [0])],remainder='passthrough')
-x = np.array(col_trans.fit_transform(x))
+#data preprocessing
+dataset = pd.read_csv('Churn_Modelling.csv')
+x = dataset.iloc[:, 3:-1].values
+#last column 1010
+y = dataset.iloc[:,-1].values
 
-#encode dependant variable
+#Encode categorical data
 label_encode = LabelEncoder()
-y = label_encode.fit_transform(y)
+#gender column
+x[:, 2] = label_encode.fit_transform(x[:, 2])
+#encode geo
+ct = ColumnTransformer(transformers=[('encoder', OneHotEncoder(),[1])],remainder='passthrough')
+x = np.array(ct.fit_transform(x))
+#split dataset training/test set
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state = 0)
+#feature scaling
+s_scaler = StandardScaler()
+x_train = s_scaler.fit_transform(x_train)
+x_test = s_scaler.fit_transform(x_test)
+
+#Initialize ANN - brain
+"sequence of layers"
+ann = tf.keras.models.Sequential()
+#hidden layer
+for i in range(2):
+  "two layer"
+  ann.add(tf.keras.layers.Dense(units=6,activation='relu'))
+
+#output layer - binary need 1 output neuron
+ann.add(tf.keras.layers.Dense(units=1,activation='sigmoid'))
+
+#Train Ann
+#compile Ann
+ann.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+#Train
+ann.fit(x_train, y_train,batch_size=32,epochs=100)
+

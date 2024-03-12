@@ -27,5 +27,7 @@ class Graph():
         plt.title(self.title)
         plt.xlabel(self.x_label)
         plt.ylabel(self.y_label)
+        plt.savefig("Fig_1")
         plt.show()  
+        
     
